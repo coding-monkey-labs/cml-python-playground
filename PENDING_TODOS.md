@@ -19,34 +19,15 @@
 | Neo4j graph repository | Done |
 | ChromaDB vector store | Done |
 | Unit tests (66 passing) | Done |
-| **Docker / docker-compose** | **Pending** |
+| Docker / docker-compose | Done |
 | **CI/CD pipeline** | **Pending** |
 | **Integration tests** | **Pending** |
 
 ---
 
-## 1. Docker & Docker Compose
+## ~~1. Docker & Docker Compose~~ (Done)
 
-### 1.1 Dockerfile
-- [ ] Multi-stage build (builder + runtime)
-- [ ] Install Python dependencies from `pyproject.toml`
-- [ ] Copy application code
-- [ ] Run with uvicorn (or gunicorn + uvicorn workers)
-- [ ] Non-root user for security
-- [ ] Health check instruction
-
-### 1.2 docker-compose.yml
-- [ ] **app** — the FastAPI application
-- [ ] **postgres** — PostgreSQL 16 with asyncpg-compatible config
-- [ ] **neo4j** — Neo4j 5.x for the knowledge graph
-- [ ] **chromadb** — ChromaDB for vector embeddings
-- [ ] **temporal** — Temporal server + UI
-- [ ] **temporal-worker** — separate container running `workflows/worker.py`
-- [ ] Shared network, named volumes for persistence
-- [ ] `.env.example` with all `EI_*` environment variables documented
-
-### 1.3 .dockerignore
-- [ ] Exclude `.git`, `__pycache__`, `.venv`, `*.pyc`, `node_modules`, etc.
+All completed — `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.env.example`.
 
 ---
 
