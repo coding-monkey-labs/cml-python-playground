@@ -1,6 +1,6 @@
 # Engineering Intelligence Platform — Pending TODOs
 
-> Auto-generated 2026-02-19 — tracks remaining work after the core implementation is complete.
+> Updated 2026-02-19
 
 ## Status Overview
 
@@ -20,70 +20,27 @@
 | ChromaDB vector store | Done |
 | Unit tests (66 passing) | Done |
 | Docker / docker-compose | Done |
-| **CI/CD pipeline** | **Pending** |
-| **Integration tests** | **Pending** |
+| README & docs | Done |
+| CI/CD pipeline | Deferred |
+| Integration tests | Deferred |
 
 ---
 
-## ~~1. Docker & Docker Compose~~ (Done)
+## Deferred: CI/CD Pipeline (GitHub Actions)
 
-All completed — `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.env.example`.
+Not needed yet. When ready, add:
 
----
-
-## 2. CI/CD Pipeline (GitHub Actions)
-
-### 2.1 `.github/workflows/ci.yml`
-- [ ] **Lint** — ruff check + ruff format --check
-- [ ] **Type check** — mypy (optional, but schemas are Pydantic)
-- [ ] **Unit tests** — `pytest tests/unit/ -v`
-- [ ] **Integration tests** — `pytest tests/integration/ -v` (with service containers)
-- [ ] **Build** — verify Docker image builds successfully
-- [ ] Matrix: Python 3.11 / 3.12
-- [ ] Cache pip dependencies
-
-### 2.2 `.github/workflows/deploy.yml` (optional)
-- [ ] Build and push Docker image to registry
-- [ ] Deploy to staging/production environment
+- `.github/workflows/ci.yml` — lint (ruff), type check (mypy), unit tests, Docker build verification
+- `.github/workflows/deploy.yml` — image push + deploy to staging/prod
 
 ---
 
-## 3. Integration Tests
+## Deferred: Integration Tests
 
-### 3.1 Database integration (`tests/integration/test_db.py`)
-- [ ] Test full CRUD cycle for each repository against a real (test) Postgres
-- [ ] Test Alembic migrations apply cleanly (upgrade + downgrade)
-- [ ] Test concurrent writes / upsert idempotency
+Not needed yet. When ready, add:
 
-### 3.2 API integration (`tests/integration/test_api.py`)
-- [ ] Test auth flow end-to-end (register → login → access protected routes)
-- [ ] Test Jira issue create → search → subtree
-- [ ] Test PR create with Jira key extraction → verify mappings created
-- [ ] Test feature tree build → metrics → defect density
-- [ ] Test analytics endpoints with seeded data
-- [ ] Test RAG similarity search + duplicate detection with real embeddings (or mocked)
-- [ ] Test workflow trigger → status polling
-
-### 3.3 Service integration (`tests/integration/test_services.py`)
-- [ ] Test JiraService.fetch_from_jira_api with mocked httpx (respx)
-- [ ] Test GitHubService.fetch_prs with mocked httpx
-- [ ] Test PRService.upsert_pr creates Jira mappings when issues exist
-- [ ] Test RAGService.index_document → similarity_search round-trip
-- [ ] Test FeatureParser against a sample React project fixture
-
-### 3.4 Workflow integration (`tests/integration/test_workflows.py`)
-- [ ] Test Temporal activities in isolation with test DB
-- [ ] Test full workflow execution with Temporal test server (if available)
-
-### 3.5 Test fixtures
-- [ ] `conftest.py` with async test DB setup (test Postgres via testcontainers or SQLite)
-- [ ] Factory fixtures for User, JiraIssue, PullRequest, Feature
-- [ ] Sample React project fixture directory for parser tests
-
----
-
-## Priority Order
-
-1. **Docker + docker-compose** — enables local development and deployment
-2. **Integration tests** — validates the wiring between layers actually works
-3. **CI/CD** — automates quality gates on every push
+- `tests/integration/test_db.py` — CRUD cycles against real Postgres, Alembic up/down
+- `tests/integration/test_api.py` — end-to-end auth flow, Jira/PR/feature CRUD via HTTP
+- `tests/integration/test_services.py` — mocked external APIs (httpx/respx), RAG round-trips
+- `tests/integration/test_workflows.py` — Temporal activities against test DB
+- `tests/integration/conftest.py` — async test DB setup, factory fixtures
