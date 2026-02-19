@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Orchestrator Platform</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">RAG Orchestrator Platform</div>
+        <div class="nav-links">
+            <a href="/" class="active">Dashboard</a>
+            <a href="/api/v1/docs" target="_blank">API Docs</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>Platform Dashboard</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_instances }}</div>
+                <div class="stat-label">Total Instances</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ active_count }}</div>
+                <div class="stat-label">Active Instances</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_documents }}</div>
+                <div class="stat-label">Total Documents</div>
+            </div>
+            <div class="stat-card stat-card--danger">
+                <div class="stat-value">{{ failed_jobs }}</div>
+                <div class="stat-label">Failed Jobs</div>
+            </div>
+        </div>
+
+        <section class="section">
+            <h2>RAG Instances</h2>
+            {% if instances %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Vector DB</th>
+                        <th>Namespace</th>
+                        <th>Documents</th>
+                        <th>Status</th>
+                        <th>Last Sync</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for instance in instances %}
+                    <tr>
+                        <td><strong>{{ instance.name }}</strong></td>
+                        <td><span class="badge">{{ instance.vector_db_type.value }}</span></td>
+                        <td><code>{{ instance.namespace }}</code></td>
+                        <td>{{ instance.document_count }}</td>
+                        <td>
+                            {% if instance.is_active %}
+                            <span class="badge badge--success">Active</span>
+                            {% else %}
+                            <span class="badge badge--muted">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ instance.last_sync_at or "Never" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-state">No RAG instances created yet. Use the API to create one.</p>
+            {% endif %}
+        </section>
+
+        <section class="section">
+            <h2>Recent Ingestion Jobs</h2>
+            {% if recent_jobs %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Processed</th>
+                        <th>Failed</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in recent_jobs %}
+                    <tr>
+                        <td>{{ job.job_type.value }}</td>
+                        <td>
+                            {% if job.status.value == "completed" %}
+                            <span class="badge badge--success">{{ job.status.value }}</span>
+                            {% elif job.status.value == "failed" %}
+                            <span class="badge badge--danger">{{ job.status.value }}</span>
+                            {% elif job.status.value == "running" %}
+                            <span class="badge badge--info">{{ job.status.value }}</span>
+                            {% else %}
+                            <span class="badge">{{ job.status.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ job.processed_documents }}/{{ job.total_documents }}</td>
+                        <td>{{ job.failed_documents }}</td>
+                        <td>{{ job.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-state">No ingestion jobs yet.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>RAG Orchestrator Platform v0.1.0 | Phase 1</p>
+    </footer>
+</body>
+</html>
