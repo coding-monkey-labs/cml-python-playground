@@ -74,6 +74,7 @@
                         <th>Embedding Model</th>
                         <th>Documents</th>
                         <th>Status</th>
+                        <th>Version</th>
                         <th>Last Sync</th>
                     </tr>
                 </thead>
@@ -104,6 +105,7 @@
                             <span class="badge badge--muted">Inactive</span>
                             {% endif %}
                         </td>
+                        <td><span class="badge">v{{ instance.index_version }}</span></td>
                         <td>{{ instance.last_sync_at or "Never" }}</td>
                     </tr>
                     {% endfor %}
@@ -113,6 +115,44 @@
             <p class="empty-state">No RAG instances created yet. Use the API to create one.</p>
             {% endif %}
         </section>
+
+        {% if recent_migrations %}
+        <section class="section">
+            <h2>Recent Migrations</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Target</th>
+                        <th>Status</th>
+                        <th>Migrated</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mig in recent_migrations %}
+                    <tr>
+                        <td><span class="badge badge--{{ mig.source_db_type }}">{{ mig.source_db_type }}</span> <code>{{ mig.source_namespace }}</code></td>
+                        <td><span class="badge badge--{{ mig.target_db_type }}">{{ mig.target_db_type }}</span> <code>{{ mig.target_namespace }}</code></td>
+                        <td>
+                            {% if mig.status.value == "completed" %}
+                            <span class="badge badge--success">{{ mig.status.value }}</span>
+                            {% elif mig.status.value == "failed" %}
+                            <span class="badge badge--danger">{{ mig.status.value }}</span>
+                            {% elif mig.status.value == "running" %}
+                            <span class="badge badge--info">{{ mig.status.value }}</span>
+                            {% else %}
+                            <span class="badge">{{ mig.status.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ mig.migrated_documents }}/{{ mig.total_documents }}</td>
+                        <td>{{ mig.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endif %}
 
         <section class="section">
             <h2>Recent Ingestion Jobs</h2>
@@ -156,7 +196,7 @@
     </main>
 
     <footer class="footer">
-        <p>RAG Orchestrator Platform v0.1.0 | Phase 2 - Multi-Database</p>
+        <p>RAG Orchestrator Platform v0.1.0 | Phase 3 - Federation & Versioning</p>
     </footer>
 </body>
 </html>

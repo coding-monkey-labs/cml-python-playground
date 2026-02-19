@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from rag_platform.core.config import VectorDBType
 from rag_platform.db.models.ingestion_job import IngestionJob, JobStatus
+from rag_platform.db.models.migration_job import MigrationJob
 from rag_platform.db.models.pipeline import Pipeline
 from rag_platform.db.models.rag_instance import RAGInstance
 from rag_platform.db.session import get_db
@@ -62,6 +63,12 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db)):
         count = sum(1 for i in instances if i.vector_db_type == db_type)
         db_instance_counts[db_type.value] = count
 
+    # Recent migrations
+    migration_result = await db.execute(
+        select(MigrationJob).order_by(MigrationJob.created_at.desc()).limit(5)
+    )
+    recent_migrations = list(migration_result.scalars().all())
+
     return templates.TemplateResponse(
         "dashboard.html",
         {
@@ -75,5 +82,6 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db)):
             "recent_jobs": recent_jobs,
             "db_health": db_health,
             "db_instance_counts": db_instance_counts,
+            "recent_migrations": recent_migrations,
         },
     )

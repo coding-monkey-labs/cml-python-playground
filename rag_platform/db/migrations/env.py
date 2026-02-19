@@ -11,7 +11,9 @@ from rag_platform.db.base import Base
 
 # Import all models so Alembic can detect them
 from rag_platform.db.models.api_key import APIKey  # noqa: F401
+from rag_platform.db.models.index_version import IndexVersion  # noqa: F401
 from rag_platform.db.models.ingestion_job import IngestionJob  # noqa: F401
+from rag_platform.db.models.migration_job import MigrationJob  # noqa: F401
 from rag_platform.db.models.pipeline import Pipeline  # noqa: F401
 from rag_platform.db.models.rag_instance import RAGInstance  # noqa: F401
 

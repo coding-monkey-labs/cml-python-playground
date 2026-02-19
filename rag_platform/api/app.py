@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from rag_platform.api.routes import admin, auth, ingestion, pipelines, query, rag_instances
+from rag_platform.api.routes import admin, auth, ingestion, pipelines, query, rag_instances, versioning
 from rag_platform.core.config import get_settings
 from rag_platform.core.exceptions import RAGPlatformError
 from rag_platform.core.logging import setup_logging
@@ -73,6 +73,7 @@ def create_app() -> FastAPI:
     app.include_router(ingestion.router, prefix="/api/v1")
     app.include_router(query.router, prefix="/api/v1")
     app.include_router(pipelines.router, prefix="/api/v1")
+    app.include_router(versioning.router, prefix="/api/v1")
     app.include_router(admin.router, prefix="/api/v1")
 
     # Register UI routes
