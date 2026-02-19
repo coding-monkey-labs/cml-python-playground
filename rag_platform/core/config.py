@@ -58,6 +58,18 @@ class Settings(BaseSettings):
     qdrant_api_key: str | None = None
     qdrant_prefer_grpc: bool = True
 
+    # Weaviate
+    weaviate_host: str = "localhost"
+    weaviate_port: int = 8080
+    weaviate_grpc_port: int = 50051
+
+    # Chroma
+    chroma_host: str = "localhost"
+    chroma_port: int = 8001
+
+    # pgvector (separate from metadata DB)
+    pgvector_url: str = "postgresql://raguser:ragpass@localhost:5433/ragvectors"
+
     # Embedding defaults
     default_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     default_embedding_dimension: int = 384

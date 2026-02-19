@@ -8,29 +8,30 @@ from rag_platform.vectordb.base import VectorDBAdapter
 def get_vector_db_adapter(db_type: VectorDBType) -> VectorDBAdapter:
     """Create and return the appropriate VectorDBAdapter for the given type.
 
-    Phase 1: Only Qdrant is supported.
-    Phase 2 will add Weaviate, Chroma, pgvector.
+    All four vector databases are supported:
+    - Qdrant (Phase 1+)
+    - Weaviate (Phase 2+)
+    - Chroma (Phase 2+)
+    - pgvector (Phase 2+)
     """
     if db_type == VectorDBType.QDRANT:
         from rag_platform.vectordb.adapters.qdrant import QdrantAdapter
 
         return QdrantAdapter()
 
-    # Phase 2 stubs
     if db_type == VectorDBType.WEAVIATE:
-        raise RAGPlatformError(
-            f"Vector DB '{db_type.value}' support coming in Phase 2",
-            details={"supported": ["qdrant"]},
-        )
+        from rag_platform.vectordb.adapters.weaviate import WeaviateAdapter
+
+        return WeaviateAdapter()
+
     if db_type == VectorDBType.CHROMA:
-        raise RAGPlatformError(
-            f"Vector DB '{db_type.value}' support coming in Phase 2",
-            details={"supported": ["qdrant"]},
-        )
+        from rag_platform.vectordb.adapters.chroma import ChromaAdapter
+
+        return ChromaAdapter()
+
     if db_type == VectorDBType.PGVECTOR:
-        raise RAGPlatformError(
-            f"Vector DB '{db_type.value}' support coming in Phase 2",
-            details={"supported": ["qdrant"]},
-        )
+        from rag_platform.vectordb.adapters.pgvector import PgvectorAdapter
+
+        return PgvectorAdapter()
 
     raise RAGPlatformError(f"Unknown vector DB type: {db_type}")

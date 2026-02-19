@@ -31,11 +31,36 @@
                 <div class="stat-value">{{ total_documents }}</div>
                 <div class="stat-label">Total Documents</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_pipelines }}</div>
+                <div class="stat-label">Pipelines</div>
+            </div>
             <div class="stat-card stat-card--danger">
                 <div class="stat-value">{{ failed_jobs }}</div>
                 <div class="stat-label">Failed Jobs</div>
             </div>
         </div>
+
+        <section class="section">
+            <h2>Vector Database Health</h2>
+            <div class="stats-grid">
+                {% for db_name, status in db_health.items() %}
+                <div class="stat-card">
+                    <div class="stat-value" style="font-size: 1.5rem;">
+                        {% if status == "healthy" %}
+                        <span class="badge badge--success">Healthy</span>
+                        {% elif status == "unavailable" %}
+                        <span class="badge badge--muted">Unavailable</span>
+                        {% else %}
+                        <span class="badge badge--danger">{{ status }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">{{ db_name | upper }}</div>
+                    <div class="stat-sublabel">{{ db_instance_counts.get(db_name, 0) }} instance(s)</div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
 
         <section class="section">
             <h2>RAG Instances</h2>
@@ -46,6 +71,7 @@
                         <th>Name</th>
                         <th>Vector DB</th>
                         <th>Namespace</th>
+                        <th>Embedding Model</th>
                         <th>Documents</th>
                         <th>Status</th>
                         <th>Last Sync</th>
@@ -55,8 +81,21 @@
                     {% for instance in instances %}
                     <tr>
                         <td><strong>{{ instance.name }}</strong></td>
-                        <td><span class="badge">{{ instance.vector_db_type.value }}</span></td>
+                        <td>
+                            {% if instance.vector_db_type.value == "qdrant" %}
+                            <span class="badge badge--qdrant">{{ instance.vector_db_type.value }}</span>
+                            {% elif instance.vector_db_type.value == "weaviate" %}
+                            <span class="badge badge--weaviate">{{ instance.vector_db_type.value }}</span>
+                            {% elif instance.vector_db_type.value == "chroma" %}
+                            <span class="badge badge--chroma">{{ instance.vector_db_type.value }}</span>
+                            {% elif instance.vector_db_type.value == "pgvector" %}
+                            <span class="badge badge--pgvector">{{ instance.vector_db_type.value }}</span>
+                            {% else %}
+                            <span class="badge">{{ instance.vector_db_type.value }}</span>
+                            {% endif %}
+                        </td>
                         <td><code>{{ instance.namespace }}</code></td>
+                        <td><code>{{ instance.embedding_model.split('/')[-1] }}</code></td>
                         <td>{{ instance.document_count }}</td>
                         <td>
                             {% if instance.is_active %}
@@ -117,7 +156,7 @@
     </main>
 
     <footer class="footer">
-        <p>RAG Orchestrator Platform v0.1.0 | Phase 1</p>
+        <p>RAG Orchestrator Platform v0.1.0 | Phase 2 - Multi-Database</p>
     </footer>
 </body>
 </html>
