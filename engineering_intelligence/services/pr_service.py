@@ -78,7 +78,7 @@ class PRService:
         mapping_types = []
         if self._jira_repo:
             for m in mappings:
-                issue = await self._jira_repo.get_by_key_id(m.jira_issue_id)
+                issue = await self._jira_repo.get_by_id(m.jira_issue_id)
                 if issue:
                     jira_keys.append(issue.jira_key)
                     mapping_types.append(m.mapping_type)
