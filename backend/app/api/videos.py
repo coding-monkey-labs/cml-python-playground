@@ -1,10 +1,12 @@
 import uuid
 
 import aiofiles
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.models.video_job import JobStatus, VideoJob
 from app.schemas.video_job import VideoJobResponse
@@ -59,6 +61,18 @@ async def upload_video(
     await db.refresh(job)
 
     logger.info(f"Created job {job.id} for file {file.filename}")
+
+    # Trigger n8n pipeline via webhook
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            webhook_url = f"{settings.n8n_webhook_url}/video-uploaded"
+            await client.post(
+                webhook_url,
+                json={"job_id": str(job.id), "pipeline_type": pipeline_type},
+            )
+            logger.info(f"Triggered n8n pipeline for job {job.id}")
+    except httpx.HTTPError as e:
+        logger.warning(f"Failed to trigger n8n webhook: {e} (job will need manual trigger)")
 
     return job
 
