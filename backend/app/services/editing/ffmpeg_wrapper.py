@@ -149,7 +149,11 @@ async def cut_segments(
         for f in segment_files:
             f.unlink(missing_ok=True)
         concat_file.unlink(missing_ok=True)
-        temp_dir.rmdir()
+        if temp_dir.exists():
+            try:
+                temp_dir.rmdir()
+            except OSError:
+                pass
 
 
 async def normalize_audio(input_path: str, output_path: str) -> str:
@@ -174,4 +178,46 @@ async def normalize_audio(input_path: str, output_path: str) -> str:
     if process.returncode != 0:
         raise RuntimeError(f"Audio normalization failed: {stderr.decode()}")
 
+    return output_path
+
+
+async def reduce_noise(input_path: str, output_path: str) -> str:
+    """Remove background noise from audio using FFmpeg's afftdn filter.
+
+    afftdn = Adaptive FFT-based Denoiser
+    - nr: noise reduction amount in dB (higher = more aggressive)
+    - nf: noise floor in dB
+    - tn: enable noise tracking (adapts to changing noise)
+    """
+    nr_db = int(settings.noise_reduction_strength * 50)  # Map 0-1 to 0-50 dB
+    audio_filter = (
+        f"afftdn=nr={nr_db}:nf=-25:tn=1,"
+        f"highpass=f=80,"        # Remove rumble below 80Hz
+        f"lowpass=f=13000"       # Remove hiss above 13kHz
+    )
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i", input_path,
+        "-af", audio_filter,
+        "-c:v", "copy",
+        "-threads", str(settings.ffmpeg_threads),
+        output_path,
+    ]
+
+    logger.info(f"Applying noise reduction (strength={settings.noise_reduction_strength})...")
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, stderr = await process.communicate()
+
+    if process.returncode != 0:
+        error_msg = stderr.decode()
+        logger.error(f"Noise reduction failed: {error_msg}")
+        raise RuntimeError(f"Noise reduction failed: {error_msg}")
+
+    logger.info(f"Noise reduction applied: {output_path}")
     return output_path

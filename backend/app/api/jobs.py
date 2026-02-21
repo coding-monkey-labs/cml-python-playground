@@ -8,7 +8,7 @@ from app.database import get_db
 from app.models.edit_plan import EditPlan
 from app.models.transcript_chunk import TranscriptChunk
 from app.models.video_job import JobStatus, VideoJob
-from app.schemas.edit_plan import EditPlanResponse
+from app.schemas.edit_plan import EditApprovalRequest, EditPlanResponse
 from app.schemas.transcript_chunk import TranscriptChunkResponse
 from app.schemas.video_job import (
     VideoJobListResponse,
@@ -95,3 +95,55 @@ async def get_job_edit_plan(
     )
     plans = result.scalars().all()
     return plans
+
+
+@router.patch("/{job_id}/edit-plan/approve")
+async def approve_edits(
+    job_id: uuid.UUID,
+    request: EditApprovalRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Approve or reject specific edit plan items."""
+    result = await db.execute(
+        select(EditPlan).where(
+            EditPlan.job_id == job_id,
+            EditPlan.id.in_(request.edit_ids),
+        )
+    )
+    edits = result.scalars().all()
+
+    if not edits:
+        raise HTTPException(status_code=404, detail="No matching edits found")
+
+    for edit in edits:
+        edit.approved = request.approved
+
+    await db.commit()
+
+    return {
+        "updated": len(edits),
+        "approved": request.approved,
+    }
+
+
+@router.patch("/{job_id}/edit-plan/approve-all")
+async def approve_all_edits(
+    job_id: uuid.UUID,
+    approved: bool = True,
+    db: AsyncSession = Depends(get_db),
+):
+    """Approve or reject all edit plan items for a job."""
+    result = await db.execute(
+        select(EditPlan).where(EditPlan.job_id == job_id)
+    )
+    edits = result.scalars().all()
+
+    for edit in edits:
+        edit.approved = approved
+
+    await db.commit()
+
+    return {
+        "updated": len(edits),
+        "approved": approved,
+    }

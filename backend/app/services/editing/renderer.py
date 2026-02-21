@@ -1,17 +1,20 @@
 """Video rendering engine: applies edit plan and produces cleaned output."""
 
+import shutil
 import uuid
 from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.edit_plan import EditPlan
 from app.models.video_job import VideoJob
 from app.services.editing.ffmpeg_wrapper import (
     cut_segments,
     get_video_info,
     normalize_audio,
+    reduce_noise,
 )
 from app.utils.logging import logger
 from app.utils.storage import get_processed_dir
@@ -20,12 +23,15 @@ from app.utils.storage import get_processed_dir
 async def apply_edit_plan(job_id: uuid.UUID, db: AsyncSession) -> str:
     """Apply edit plan to a video and render the cleaned output.
 
+    Only applies edits that have been approved (approved=True).
+
     Steps:
-    1. Load edit plan (segments to remove)
-    2. Calculate keep segments (inverse)
+    1. Load approved edit plan entries
+    2. Calculate keep segments (inverse of removes)
     3. Cut and concatenate
-    4. Normalize audio
-    5. Return output path
+    4. Apply noise reduction
+    5. Normalize audio
+    6. Return output path
     """
     # Load job
     result = await db.execute(select(VideoJob).where(VideoJob.id == job_id))
@@ -33,22 +39,32 @@ async def apply_edit_plan(job_id: uuid.UUID, db: AsyncSession) -> str:
     if not job:
         raise ValueError(f"Job {job_id} not found")
 
-    # Load edit plan
+    # Load APPROVED edit plan entries only
     result = await db.execute(
         select(EditPlan)
         .where(EditPlan.job_id == job_id)
+        .where(EditPlan.approved.is_(True))
         .where(EditPlan.action.in_(["remove", "compress"]))
         .order_by(EditPlan.start_time)
     )
     edits = result.scalars().all()
 
+    output_dir = get_processed_dir()
+    ext = Path(job.input_path).suffix
+
     if not edits:
-        logger.info(f"[{job_id}] No edits to apply, copying original")
-        output_dir = get_processed_dir()
-        output_path = output_dir / f"{job_id}_cleaned{Path(job.input_path).suffix}"
-        import shutil
-        shutil.copy2(job.input_path, str(output_path))
-        return str(output_path)
+        logger.info(f"[{job_id}] No approved edits to apply")
+        if settings.noise_reduction_enabled:
+            # Still apply noise reduction even with no cuts
+            nr_path = str(output_dir / f"{job_id}_nr{ext}")
+            output_path = str(output_dir / f"{job_id}_cleaned{ext}")
+            await reduce_noise(job.input_path, nr_path)
+            await normalize_audio(nr_path, output_path)
+            Path(nr_path).unlink(missing_ok=True)
+        else:
+            output_path = str(output_dir / f"{job_id}_cleaned{ext}")
+            shutil.copy2(job.input_path, output_path)
+        return output_path
 
     # Get video info
     video_info = await get_video_info(job.input_path)
@@ -62,18 +78,23 @@ async def apply_edit_plan(job_id: uuid.UUID, db: AsyncSession) -> str:
         raise ValueError("Edit plan would remove entire video")
 
     logger.info(
-        f"[{job_id}] Removing {len(remove_regions)} segments, "
+        f"[{job_id}] Removing {len(remove_regions)} approved segments, "
         f"keeping {len(keep_segments)} segments"
     )
 
-    # Cut and concatenate
-    output_dir = get_processed_dir()
-    cut_path = str(output_dir / f"{job_id}_cut{Path(job.input_path).suffix}")
-    output_path = str(output_dir / f"{job_id}_cleaned{Path(job.input_path).suffix}")
-
+    # Step 1: Cut and concatenate
+    cut_path = str(output_dir / f"{job_id}_cut{ext}")
     await cut_segments(job.input_path, cut_path, keep_segments)
 
-    # Normalize audio in the final output
+    # Step 2: Noise reduction
+    if settings.noise_reduction_enabled:
+        nr_path = str(output_dir / f"{job_id}_nr{ext}")
+        await reduce_noise(cut_path, nr_path)
+        Path(cut_path).unlink(missing_ok=True)
+        cut_path = nr_path
+
+    # Step 3: Normalize audio
+    output_path = str(output_dir / f"{job_id}_cleaned{ext}")
     await normalize_audio(cut_path, output_path)
 
     # Cleanup intermediate file

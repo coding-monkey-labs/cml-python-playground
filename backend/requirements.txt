@@ -9,9 +9,8 @@ asyncpg==0.30.0
 alembic==1.14.1
 psycopg2-binary==2.9.10
 
-# AI / ML
+# AI / ML (all open-source, Ollama-hosted)
 faster-whisper==1.1.0
-anthropic==0.43.0
 httpx==0.28.1
 
 # Video/Audio processing

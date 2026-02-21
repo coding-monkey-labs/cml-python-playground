@@ -1,4 +1,4 @@
-"""Edit plan generator that combines local scoring with LLM analysis."""
+"""Edit plan generator that combines local scoring with Ollama LLM analysis."""
 
 import uuid
 
@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.edit_plan import EditPlan
 from app.models.transcript_chunk import TranscriptChunk
-from app.services.intelligence.claude_reviewer import ClaudeReviewer
 from app.services.intelligence.ollama_client import OllamaClient
 from app.services.intelligence.segment_scorer import (
     SegmentScores,
@@ -27,8 +26,8 @@ async def generate_edit_plan(
     Steps:
     1. Score all transcript chunks
     2. Apply local rule-based detection
-    3. Get LLM analysis (Ollama)
-    4. Get Claude strategic review
+    3. Detect silence gaps
+    4. Ollama LLM strategic review
     5. Merge all sources into final edit plan
     """
     # Load transcript chunks
@@ -98,24 +97,25 @@ async def generate_edit_plan(
 
     logger.info(f"[{job_id}] Local analysis: {len(local_edits)} edits")
 
-    # Step 4: Claude strategic review (if configured)
+    # Step 4: Ollama LLM strategic review
     all_edits = list(local_edits)
-    if settings.anthropic_api_key:
+    try:
+        transcript_text = " ".join(c.text for c in chunks)
+        ollama = OllamaClient(model=settings.ollama_reviewer_model)
         try:
-            transcript_text = " ".join(c.text for c in chunks)
-            reviewer = ClaudeReviewer()
-            claude_edits = await reviewer.evaluate_edit_plan(
+            ollama_edits = await ollama.review_edit_plan(
                 transcript_text, local_edits
             )
-            # Merge Claude suggestions
-            for edit in claude_edits:
-                if edit.get("source") == "claude":
+            for edit in ollama_edits:
+                if edit.get("source") == "ollama":
                     all_edits.append(edit)
-            logger.info(
-                f"[{job_id}] Claude added {len(claude_edits) - len(local_edits)} suggestions"
-            )
-        except Exception as e:
-            logger.warning(f"[{job_id}] Claude review skipped: {e}")
+            new_count = len(ollama_edits) - len(local_edits)
+            if new_count > 0:
+                logger.info(f"[{job_id}] Ollama added {new_count} suggestions")
+        finally:
+            await ollama.close()
+    except Exception as e:
+        logger.warning(f"[{job_id}] Ollama review skipped: {e}")
 
     # Step 5: Deduplicate and merge overlapping edits
     merged_edits = _merge_overlapping_edits(all_edits)
@@ -188,15 +188,12 @@ def _merge_overlapping_edits(edits: list[dict]) -> list[dict]:
     if not edits:
         return []
 
-    # Sort by start time
     sorted_edits = sorted(edits, key=lambda e: e["start"])
     merged = [sorted_edits[0]]
 
     for edit in sorted_edits[1:]:
         prev = merged[-1]
-        # If overlapping or adjacent (within 0.5s)
         if edit["start"] <= prev["end"] + 0.5:
-            # Extend the previous edit
             prev["end"] = max(prev["end"], edit["end"])
             prev["confidence"] = max(prev["confidence"], edit.get("confidence", 0.0))
             if edit.get("reason") and edit["reason"] not in prev.get("reason", ""):

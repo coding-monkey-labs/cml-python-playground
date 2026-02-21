@@ -22,6 +22,12 @@ class EditPlanResponse(BaseModel):
     reason: str
     confidence: float
     source: str
+    approved: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class EditApprovalRequest(BaseModel):
+    edit_ids: list[uuid.UUID]
+    approved: bool

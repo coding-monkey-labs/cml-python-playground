@@ -8,13 +8,11 @@ class Settings(BaseSettings):
     # Storage
     storage_path: str = "/data/videos"
 
-    # Ollama
+    # Ollama (all models are open-source, Ollama-hosted)
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "llama3:8b"
-
-    # Claude
-    anthropic_api_key: str = ""
-    claude_model: str = "claude-sonnet-4-20250514"
+    ollama_reviewer_model: str = "llama3:8b"
+    ollama_auto_pull: bool = True
 
     # Whisper
     whisper_model_size: str = "base"
@@ -27,10 +25,17 @@ class Settings(BaseSettings):
     # FFmpeg
     ffmpeg_threads: int = 4
 
+    # Audio noise removal
+    noise_reduction_enabled: bool = True
+    noise_reduction_strength: float = 0.21  # afftdn noise floor (0.0-1.0)
+
     # Scoring thresholds
     filler_score_threshold: float = 0.4
     engagement_score_threshold: float = 0.3
     silence_threshold_seconds: float = 1.5
+
+    # Batch processing
+    max_concurrent_jobs: int = 3
 
     model_config = {"env_file": ".env"}
 

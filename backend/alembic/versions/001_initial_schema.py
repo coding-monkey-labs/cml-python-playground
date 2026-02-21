@@ -95,6 +95,7 @@ def upgrade():
         sa.Column("reason", sa.Text, nullable=False),
         sa.Column("confidence", sa.Float, default=0.0),
         sa.Column("source", sa.String(64), default="local"),
+        sa.Column("approved", sa.Boolean, default=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
