@@ -1,0 +1,71 @@
+id: create_bucket_versioned
+name: Create Bucket with Versioning
+description: Create a new bucket with versioning enabled by default
+
+initial_state: input_config
+context:
+  versioning: true
+
+states:
+  input_config:
+    ui:
+      title: Create Versioned Bucket
+      description: Create a new bucket with versioning pre-enabled
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-versioned-bucket"
+          required: true
+        - type: select
+          key: region
+          label: Region
+          options:
+            - label: US East (N. Virginia)
+              value: us-east-1
+            - label: US West (Oregon)
+              value: us-west-2
+            - label: EU (Ireland)
+              value: eu-west-1
+        - type: message
+          key: versioning_note
+          label: "Versioning will be enabled automatically for this bucket."
+          variant: info
+    transitions:
+      - action: create
+        target: creating
+      - action: cancel
+        target: __end__
+
+  creating:
+    ui:
+      title: Creating Versioned Bucket
+      description: "Creating bucket '{{bucket_name}}' with versioning..."
+      components:
+        - type: message
+          key: creating_msg
+          label: "Setting up versioned bucket '{{bucket_name}}'..."
+          variant: info
+    transitions:
+      - action: created
+        target: success
+    action:
+      type: s3_call
+      operation: create_bucket
+      params:
+        bucket_name: "$ctx.bucket_name"
+        region: "$ctx.region"
+        versioning: true
+
+  success:
+    ui:
+      title: Versioned Bucket Created
+      description: Bucket created with versioning enabled
+      components:
+        - type: message
+          key: success_msg
+          label: "Bucket '{{bucket_name}}' created with versioning enabled!"
+          variant: success
+    transitions:
+      - action: done
+        target: __end__

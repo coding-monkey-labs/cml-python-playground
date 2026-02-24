@@ -1,0 +1,64 @@
+id: list_buckets
+name: List All Buckets
+description: List and browse all S3/ObjectScale buckets
+
+initial_state: loading
+context: {}
+
+states:
+  loading:
+    ui:
+      title: Loading Buckets
+      description: Fetching bucket list from ObjectScale...
+      components:
+        - type: message
+          key: loading_msg
+          label: Retrieving buckets...
+          variant: info
+    transitions:
+      - action: loaded
+        target: display_list
+    action:
+      type: s3_call
+      operation: list_buckets
+      params: {}
+
+  display_list:
+    ui:
+      title: All Buckets
+      description: "Showing all available S3/ObjectScale buckets"
+      components:
+        - type: table
+          key: buckets
+          label: Buckets
+          columns:
+            - name
+            - creation_date
+          data_from_context: true
+    transitions:
+      - action: inspect
+        target: inspect_bucket
+      - action: refresh
+        target: loading
+      - action: done
+        target: __end__
+
+  inspect_bucket:
+    ui:
+      title: "Bucket Details: {{bucket_name}}"
+      description: Full configuration for the selected bucket
+      components:
+        - type: summary
+          key: bucket_details
+          label: Bucket Configuration
+          data_from_context: true
+    transitions:
+      - action: back
+        target: display_list
+      - action: done
+        target: __end__
+    action:
+      type: s3_call
+      operation: get_bucket_details
+      params:
+        bucket_name: "$ctx.bucket_name"

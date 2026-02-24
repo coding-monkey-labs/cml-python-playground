@@ -1,0 +1,128 @@
+id: inspect_bucket
+name: Inspect Bucket
+description: View full configuration details for an S3/ObjectScale bucket
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Inspect Bucket
+      description: Enter the bucket name to inspect its full configuration
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: inspect
+        target: loading
+
+  loading:
+    ui:
+      title: Loading Bucket Details
+      description: "Fetching configuration for '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: loading_msg
+          label: "Retrieving details for '{{bucket_name}}'..."
+          variant: info
+    transitions:
+      - action: loaded
+        target: display_details
+    action:
+      type: s3_call
+      operation: get_bucket_details
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  display_details:
+    ui:
+      title: "Bucket: {{bucket_name}}"
+      description: Full bucket configuration
+      components:
+        - type: summary
+          key: bucket_details
+          label: Overview
+        - type: message
+          key: versioning_status
+          label: "Versioning: {{versioning}}"
+          variant: info
+          value_from_context: true
+        - type: message
+          key: lifecycle_info
+          label: "Lifecycle Rules: {{lifecycle_rules}}"
+          variant: info
+          value_from_context: true
+        - type: message
+          key: object_count_info
+          label: "Object Count: {{object_count}}"
+          variant: info
+          value_from_context: true
+    transitions:
+      - action: check_versioning
+        target: versioning_detail
+      - action: check_lifecycle
+        target: lifecycle_detail
+      - action: check_lock
+        target: lock_detail
+      - action: back
+        target: select_bucket
+      - action: done
+        target: __end__
+
+  versioning_detail:
+    ui:
+      title: "Versioning - {{bucket_name}}"
+      description: Bucket versioning configuration
+      components:
+        - type: summary
+          key: versioning_data
+          label: Versioning Status
+          data_from_context: true
+    transitions:
+      - action: back
+        target: display_details
+    action:
+      type: s3_call
+      operation: get_bucket_versioning
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  lifecycle_detail:
+    ui:
+      title: "Lifecycle Rules - {{bucket_name}}"
+      description: Bucket lifecycle configuration
+      components:
+        - type: summary
+          key: lifecycle_data
+          label: Lifecycle Rules
+          data_from_context: true
+    transitions:
+      - action: back
+        target: display_details
+    action:
+      type: s3_call
+      operation: get_bucket_lifecycle
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  lock_detail:
+    ui:
+      title: "Object Lock - {{bucket_name}}"
+      description: Bucket Object Lock configuration
+      components:
+        - type: summary
+          key: lock_data
+          label: Object Lock Configuration
+          data_from_context: true
+    transitions:
+      - action: back
+        target: display_details
+    action:
+      type: s3_call
+      operation: get_object_lock_configuration
+      params:
+        bucket_name: "$ctx.bucket_name"

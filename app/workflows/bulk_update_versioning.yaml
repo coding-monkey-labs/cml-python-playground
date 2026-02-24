@@ -1,0 +1,111 @@
+id: bulk_update_versioning
+name: Bulk Update Versioning
+description: Enable or suspend versioning across multiple buckets at once
+
+initial_state: loading_buckets
+context: {}
+
+states:
+  loading_buckets:
+    ui:
+      title: Bulk Versioning Update
+      description: Loading all buckets for bulk operation...
+      components:
+        - type: message
+          key: loading_msg
+          label: "Fetching bucket list..."
+          variant: info
+    transitions:
+      - action: loaded
+        target: select_buckets
+    action:
+      type: s3_call
+      operation: list_buckets
+      params: {}
+
+  select_buckets:
+    ui:
+      title: Select Buckets for Bulk Versioning
+      description: Choose which buckets to update
+      components:
+        - type: table
+          key: buckets
+          label: Available Buckets
+          columns:
+            - name
+            - creation_date
+          data_from_context: true
+        - type: text
+          key: filter_prefix
+          label: Filter by Prefix (optional)
+          placeholder: "prod-"
+        - type: select
+          key: target_status
+          label: Target Versioning Status
+          options:
+            - label: Enabled
+              value: Enabled
+            - label: Suspended
+              value: Suspended
+    transitions:
+      - action: preview
+        target: preview_changes
+      - action: cancel
+        target: __end__
+
+  preview_changes:
+    ui:
+      title: Preview Bulk Changes
+      description: Review the changes before applying
+      components:
+        - type: message
+          key: change_summary
+          label: "Setting versioning to '{{target_status}}' on selected buckets"
+          variant: warning
+        - type: table
+          key: selected_buckets
+          label: Buckets to Update
+          columns:
+            - name
+          data_from_context: true
+    transitions:
+      - action: apply
+        target: executing
+      - action: back
+        target: select_buckets
+
+  executing:
+    ui:
+      title: Applying Bulk Changes
+      description: "Updating versioning across selected buckets..."
+      components:
+        - type: message
+          key: executing_msg
+          label: "Applying versioning changes..."
+          variant: info
+    transitions:
+      - action: completed
+        target: results
+    action:
+      type: bulk_s3_call
+      operation: put_bucket_versioning
+      items_key: selected_buckets
+      params:
+        status: "$ctx.target_status"
+
+  results:
+    ui:
+      title: Bulk Update Results
+      description: Summary of the bulk versioning update
+      components:
+        - type: table
+          key: results
+          label: Operation Results
+          columns:
+            - item
+            - success
+            - error
+          data_from_context: true
+    transitions:
+      - action: done
+        target: __end__

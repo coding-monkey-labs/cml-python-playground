@@ -1,0 +1,82 @@
+id: create_bucket_locked
+name: Create Bucket with Object Lock
+description: Create a new bucket with object lock configuration
+
+initial_state: input_config
+context:
+  object_lock: true
+
+states:
+  input_config:
+    ui:
+      title: Create Locked Bucket
+      description: Create a new bucket with Object Lock enabled
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-locked-bucket"
+          required: true
+        - type: select
+          key: region
+          label: Region
+          options:
+            - label: US East (N. Virginia)
+              value: us-east-1
+            - label: US West (Oregon)
+              value: us-west-2
+            - label: EU (Ireland)
+              value: eu-west-1
+        - type: select
+          key: lock_mode
+          label: Lock Mode
+          options:
+            - label: Governance
+              value: GOVERNANCE
+            - label: Compliance
+              value: COMPLIANCE
+        - type: text
+          key: lock_days
+          label: Retention Days
+          placeholder: "30"
+          value: "30"
+    transitions:
+      - action: create
+        target: creating
+      - action: cancel
+        target: __end__
+
+  creating:
+    ui:
+      title: Creating Locked Bucket
+      description: "Creating bucket '{{bucket_name}}' with Object Lock..."
+      components:
+        - type: message
+          key: creating_msg
+          label: "Setting up locked bucket '{{bucket_name}}'..."
+          variant: info
+    transitions:
+      - action: created
+        target: success
+    action:
+      type: s3_call
+      operation: create_bucket
+      params:
+        bucket_name: "$ctx.bucket_name"
+        region: "$ctx.region"
+        object_lock: true
+        lock_mode: "$ctx.lock_mode"
+        lock_days: "$ctx.lock_days"
+
+  success:
+    ui:
+      title: Locked Bucket Created
+      description: Bucket created with Object Lock enabled
+      components:
+        - type: message
+          key: success_msg
+          label: "Bucket '{{bucket_name}}' created with Object Lock ({{lock_mode}}, {{lock_days}} days)!"
+          variant: success
+    transitions:
+      - action: done
+        target: __end__

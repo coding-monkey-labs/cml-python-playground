@@ -1,0 +1,120 @@
+id: update_lifecycle
+name: Update Lifecycle Rules
+description: Update lifecycle rules on an S3/ObjectScale bucket
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Update Lifecycle Rules
+      description: Select a bucket to manage its lifecycle rules
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: check
+        target: checking
+
+  checking:
+    ui:
+      title: Loading Lifecycle Rules
+      description: "Fetching lifecycle rules for '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: checking_msg
+          label: "Loading current lifecycle configuration..."
+          variant: info
+    transitions:
+      - action: checked
+        target: configure
+    action:
+      type: s3_call
+      operation: get_bucket_lifecycle
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  configure:
+    ui:
+      title: "Lifecycle Rules - {{bucket_name}}"
+      description: Configure lifecycle rules
+      components:
+        - type: table
+          key: rules
+          label: Current Rules
+          columns:
+            - ID
+            - Status
+            - Prefix
+          data_from_context: true
+        - type: text
+          key: rule_id
+          label: Rule ID
+          placeholder: "expire-old-objects"
+          required: true
+        - type: text
+          key: rule_prefix
+          label: Prefix Filter
+          placeholder: "logs/"
+        - type: text
+          key: expiration_days
+          label: Expiration (Days)
+          placeholder: "90"
+          required: true
+        - type: select
+          key: rule_status
+          label: Rule Status
+          options:
+            - label: Enabled
+              value: Enabled
+            - label: Disabled
+              value: Disabled
+    transitions:
+      - action: apply
+        target: applying
+      - action: cancel
+        target: __end__
+
+  applying:
+    ui:
+      title: Applying Lifecycle Rules
+      description: "Updating lifecycle rules on '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: applying_msg
+          label: "Applying lifecycle rule '{{rule_id}}'..."
+          variant: info
+    transitions:
+      - action: applied
+        target: success
+    action:
+      type: s3_call
+      operation: put_bucket_lifecycle
+      params:
+        bucket_name: "$ctx.bucket_name"
+        rules:
+          - ID: "$ctx.rule_id"
+            Status: "$ctx.rule_status"
+            Filter:
+              Prefix: "$ctx.rule_prefix"
+            Expiration:
+              Days: "$ctx.expiration_days"
+
+  success:
+    ui:
+      title: Lifecycle Rules Updated
+      description: Lifecycle configuration has been updated
+      components:
+        - type: message
+          key: success_msg
+          label: "Lifecycle rule '{{rule_id}}' applied to '{{bucket_name}}'!"
+          variant: success
+    transitions:
+      - action: update_another
+        target: select_bucket
+      - action: done
+        target: __end__

@@ -1,0 +1,57 @@
+id: list_buckets_by_prefix
+name: List Buckets by Prefix
+description: Filter and list buckets matching a name prefix pattern
+
+initial_state: input_prefix
+context: {}
+
+states:
+  input_prefix:
+    ui:
+      title: Filter Buckets by Prefix
+      description: Enter a prefix pattern to filter bucket names
+      components:
+        - type: text
+          key: prefix
+          label: Bucket Name Prefix
+          placeholder: "e.g., prod-, staging-, data-"
+          required: true
+    transitions:
+      - action: search
+        target: searching
+
+  searching:
+    ui:
+      title: Searching Buckets
+      description: "Filtering buckets with prefix: {{prefix}}"
+      components:
+        - type: message
+          key: search_msg
+          label: "Searching for buckets matching '{{prefix}}'..."
+          variant: info
+    transitions:
+      - action: loaded
+        target: display_results
+    action:
+      type: s3_call
+      operation: list_buckets
+      params:
+        prefix: "$ctx.prefix"
+
+  display_results:
+    ui:
+      title: "Buckets Matching '{{prefix}}'"
+      description: Filtered bucket list
+      components:
+        - type: table
+          key: buckets
+          label: Matching Buckets
+          columns:
+            - name
+            - creation_date
+          data_from_context: true
+    transitions:
+      - action: new_search
+        target: input_prefix
+      - action: done
+        target: __end__

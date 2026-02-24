@@ -1,0 +1,105 @@
+id: create_bucket
+name: Create Bucket
+description: Create a new S3/ObjectScale bucket with optional versioning and object lock
+
+initial_state: input_config
+context: {}
+
+states:
+  input_config:
+    ui:
+      title: Create New Bucket
+      description: Configure your new S3/ObjectScale bucket
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-new-bucket"
+          required: true
+        - type: select
+          key: region
+          label: Region
+          options:
+            - label: US East (N. Virginia)
+              value: us-east-1
+            - label: US West (Oregon)
+              value: us-west-2
+            - label: EU (Ireland)
+              value: eu-west-1
+        - type: checkbox
+          key: versioning
+          label: Enable Versioning
+          value: false
+        - type: checkbox
+          key: object_lock
+          label: Enable Object Lock
+          value: false
+    transitions:
+      - action: preview
+        target: preview_config
+
+  preview_config:
+    ui:
+      title: Confirm Bucket Creation
+      description: Review your bucket configuration before creating
+      components:
+        - type: summary
+          key: config_summary
+          label: Bucket Configuration
+        - type: message
+          key: bucket_name_display
+          label: "Bucket: {{bucket_name}}"
+          variant: info
+        - type: message
+          key: region_display
+          label: "Region: {{region}}"
+          variant: info
+        - type: message
+          key: versioning_display
+          label: "Versioning: {{versioning}}"
+          variant: info
+        - type: message
+          key: lock_display
+          label: "Object Lock: {{object_lock}}"
+          variant: info
+    transitions:
+      - action: confirm
+        target: creating
+      - action: back
+        target: input_config
+
+  creating:
+    ui:
+      title: Creating Bucket
+      description: "Creating bucket '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: creating_msg
+          label: "Creating bucket '{{bucket_name}}' in region {{region}}..."
+          variant: info
+    transitions:
+      - action: created
+        target: success
+    action:
+      type: s3_call
+      operation: create_bucket
+      params:
+        bucket_name: "$ctx.bucket_name"
+        region: "$ctx.region"
+        versioning: "$ctx.versioning"
+        object_lock: "$ctx.object_lock"
+
+  success:
+    ui:
+      title: Bucket Created
+      description: Your bucket has been successfully created
+      components:
+        - type: message
+          key: success_msg
+          label: "Bucket '{{bucket_name}}' created successfully!"
+          variant: success
+    transitions:
+      - action: create_another
+        target: input_config
+      - action: done
+        target: __end__

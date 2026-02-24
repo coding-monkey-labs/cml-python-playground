@@ -1,0 +1,58 @@
+id: get_bucket_versioning
+name: Get Bucket Versioning Status
+description: Check the versioning status of an S3/ObjectScale bucket
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Check Bucket Versioning
+      description: Enter a bucket name to check its versioning status
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: check
+        target: loading
+
+  loading:
+    ui:
+      title: Checking Versioning
+      description: "Fetching versioning status for '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: loading_msg
+          label: "Retrieving versioning configuration..."
+          variant: info
+    transitions:
+      - action: loaded
+        target: display
+    action:
+      type: s3_call
+      operation: get_bucket_versioning
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  display:
+    ui:
+      title: "Versioning Status - {{bucket_name}}"
+      description: Current versioning configuration
+      components:
+        - type: message
+          key: status_display
+          label: "Versioning Status: {{status}}"
+          variant: info
+        - type: message
+          key: mfa_display
+          label: "MFA Delete: {{mfa_delete}}"
+          variant: info
+    transitions:
+      - action: check_another
+        target: select_bucket
+      - action: done
+        target: __end__

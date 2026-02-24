@@ -1,0 +1,126 @@
+id: update_bucket_policy
+name: Update Bucket Policy
+description: View and update the bucket policy for an S3/ObjectScale bucket
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Update Bucket Policy
+      description: Select a bucket to manage its policy
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: check
+        target: loading
+
+  loading:
+    ui:
+      title: Loading Policy
+      description: "Fetching bucket policy for '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: loading_msg
+          label: "Loading policy..."
+          variant: info
+    transitions:
+      - action: loaded
+        target: edit_policy
+    action:
+      type: s3_call
+      operation: get_bucket_policy
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  edit_policy:
+    ui:
+      title: "Bucket Policy - {{bucket_name}}"
+      description: Edit the JSON bucket policy
+      components:
+        - type: text
+          key: policy
+          label: Policy JSON
+          placeholder: '{"Version":"2012-10-17","Statement":[]}'
+          value_from_context: true
+    transitions:
+      - action: apply
+        target: confirm
+      - action: delete_policy
+        target: deleting_policy
+      - action: cancel
+        target: __end__
+
+  confirm:
+    ui:
+      title: Confirm Policy Update
+      description: Review the policy before applying
+      components:
+        - type: message
+          key: policy_preview
+          label: "Policy to apply on '{{bucket_name}}':"
+          variant: warning
+        - type: summary
+          key: policy
+          label: Policy JSON
+          value_from_context: true
+    transitions:
+      - action: confirm
+        target: applying
+      - action: back
+        target: edit_policy
+
+  applying:
+    ui:
+      title: Applying Policy
+      description: "Updating policy on '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: applying_msg
+          label: "Applying bucket policy..."
+          variant: info
+    transitions:
+      - action: applied
+        target: success
+    action:
+      type: s3_call
+      operation: put_bucket_policy
+      params:
+        bucket_name: "$ctx.bucket_name"
+        policy: "$ctx.policy"
+
+  deleting_policy:
+    ui:
+      title: Deleting Policy
+      description: "Removing policy from '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: deleting_msg
+          label: "Deleting bucket policy..."
+          variant: warning
+    transitions:
+      - action: deleted
+        target: success
+    action:
+      type: s3_call
+      operation: delete_bucket_policy
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  success:
+    ui:
+      title: Policy Updated
+      description: Bucket policy has been updated
+      components:
+        - type: message
+          key: success_msg
+          label: "Bucket policy on '{{bucket_name}}' updated successfully!"
+          variant: success
+    transitions:
+      - action: done
+        target: __end__

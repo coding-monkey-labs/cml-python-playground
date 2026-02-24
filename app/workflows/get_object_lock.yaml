@@ -1,0 +1,58 @@
+id: get_object_lock
+name: Get Object Lock Configuration
+description: Check the Object Lock configuration of an S3/ObjectScale bucket
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Check Object Lock
+      description: Enter a bucket name to check its Object Lock configuration
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: check
+        target: loading
+
+  loading:
+    ui:
+      title: Checking Object Lock
+      description: "Fetching Object Lock configuration for '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: loading_msg
+          label: "Retrieving Object Lock configuration..."
+          variant: info
+    transitions:
+      - action: loaded
+        target: display
+    action:
+      type: s3_call
+      operation: get_object_lock_configuration
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  display:
+    ui:
+      title: "Object Lock - {{bucket_name}}"
+      description: Current Object Lock configuration
+      components:
+        - type: message
+          key: enabled_display
+          label: "Object Lock: {{enabled}}"
+          variant: info
+        - type: summary
+          key: rule
+          label: Retention Rule
+          data_from_context: true
+    transitions:
+      - action: check_another
+        target: select_bucket
+      - action: done
+        target: __end__

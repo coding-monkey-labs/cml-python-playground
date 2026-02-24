@@ -1,0 +1,111 @@
+id: update_versioning
+name: Update Bucket Versioning
+description: Enable or suspend versioning on an S3/ObjectScale bucket
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Update Bucket Versioning
+      description: Select a bucket to update its versioning configuration
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: check
+        target: checking_status
+
+  checking_status:
+    ui:
+      title: Checking Versioning
+      description: "Checking current versioning status for '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: checking_msg
+          label: "Checking versioning status..."
+          variant: info
+    transitions:
+      - action: checked
+        target: configure
+    action:
+      type: s3_call
+      operation: get_bucket_versioning
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  configure:
+    ui:
+      title: "Versioning - {{bucket_name}}"
+      description: "Current status: {{status}}"
+      components:
+        - type: message
+          key: current_status
+          label: "Current versioning status: {{status}}"
+          variant: info
+        - type: select
+          key: new_status
+          label: New Versioning Status
+          options:
+            - label: Enabled
+              value: Enabled
+            - label: Suspended
+              value: Suspended
+    transitions:
+      - action: apply
+        target: confirm
+      - action: cancel
+        target: __end__
+
+  confirm:
+    ui:
+      title: Confirm Versioning Change
+      description: Review the versioning change before applying
+      components:
+        - type: message
+          key: change_summary
+          label: "Change versioning on '{{bucket_name}}' from '{{status}}' to '{{new_status}}'"
+          variant: warning
+    transitions:
+      - action: confirm
+        target: applying
+      - action: back
+        target: configure
+
+  applying:
+    ui:
+      title: Applying Changes
+      description: "Updating versioning on '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: applying_msg
+          label: "Applying versioning change..."
+          variant: info
+    transitions:
+      - action: applied
+        target: success
+    action:
+      type: s3_call
+      operation: put_bucket_versioning
+      params:
+        bucket_name: "$ctx.bucket_name"
+        status: "$ctx.new_status"
+
+  success:
+    ui:
+      title: Versioning Updated
+      description: Versioning configuration has been updated
+      components:
+        - type: message
+          key: success_msg
+          label: "Versioning on '{{bucket_name}}' set to '{{new_status}}' successfully!"
+          variant: success
+    transitions:
+      - action: update_another
+        target: select_bucket
+      - action: done
+        target: __end__

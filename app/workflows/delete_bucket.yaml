@@ -1,0 +1,97 @@
+id: delete_bucket
+name: Delete Bucket
+description: Safely delete an S3/ObjectScale bucket with dependency checks
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Delete Bucket
+      description: Select a bucket to delete
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: check
+        target: checking_dependencies
+
+  checking_dependencies:
+    ui:
+      title: Checking Dependencies
+      description: "Verifying bucket '{{bucket_name}}' can be safely deleted..."
+      components:
+        - type: message
+          key: checking_msg
+          label: "Checking bucket contents and dependencies..."
+          variant: info
+    transitions:
+      - action: checked
+        target: confirm_delete
+    action:
+      type: s3_call
+      operation: get_bucket_details
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  confirm_delete:
+    ui:
+      title: "Confirm Delete: {{bucket_name}}"
+      description: Review bucket details before deletion
+      components:
+        - type: message
+          key: object_count_msg
+          label: "Objects in bucket: {{object_count}}"
+          variant: warning
+        - type: message
+          key: versioning_msg
+          label: "Versioning: {{versioning}}"
+          variant: info
+        - type: message
+          key: lifecycle_msg
+          label: "Lifecycle rules: {{lifecycle_rules}}"
+          variant: info
+        - type: message
+          key: danger_warning
+          label: "WARNING: This action cannot be undone. The bucket must be empty to delete."
+          variant: danger
+    transitions:
+      - action: confirm_delete
+        target: deleting
+      - action: cancel
+        target: __end__
+
+  deleting:
+    ui:
+      title: Deleting Bucket
+      description: "Deleting bucket '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: deleting_msg
+          label: "Deleting bucket..."
+          variant: warning
+    transitions:
+      - action: deleted
+        target: success
+    action:
+      type: s3_call
+      operation: delete_bucket
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  success:
+    ui:
+      title: Bucket Deleted
+      description: Bucket has been removed
+      components:
+        - type: message
+          key: success_msg
+          label: "Bucket '{{bucket_name}}' has been deleted."
+          variant: success
+    transitions:
+      - action: done
+        target: __end__

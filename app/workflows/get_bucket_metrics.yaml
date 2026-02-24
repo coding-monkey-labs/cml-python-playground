@@ -1,0 +1,67 @@
+id: get_bucket_metrics
+name: Get Bucket Metrics
+description: Get object count and storage metrics for an S3/ObjectScale bucket
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Bucket Metrics
+      description: Enter a bucket name to view its metrics
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: check
+        target: loading
+
+  loading:
+    ui:
+      title: Loading Metrics
+      description: "Gathering metrics for '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: loading_msg
+          label: "Counting objects and computing metrics..."
+          variant: info
+    transitions:
+      - action: loaded
+        target: display
+    action:
+      type: s3_call
+      operation: list_objects
+      params:
+        bucket_name: "$ctx.bucket_name"
+        max_keys: 1000
+
+  display:
+    ui:
+      title: "Metrics - {{bucket_name}}"
+      description: Bucket storage metrics
+      components:
+        - type: message
+          key: count_display
+          label: "Object Count: {{count}}"
+          variant: info
+        - type: message
+          key: truncated_display
+          label: "Truncated (>1000 objects): {{truncated}}"
+          variant: info
+        - type: table
+          key: objects
+          label: Objects (sample)
+          columns:
+            - key
+            - size
+            - last_modified
+          data_from_context: true
+    transitions:
+      - action: check_another
+        target: select_bucket
+      - action: done
+        target: __end__

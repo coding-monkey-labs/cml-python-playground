@@ -1,0 +1,115 @@
+id: update_object_lock
+name: Update Object Lock
+description: Update Object Lock configuration on an S3/ObjectScale bucket
+
+initial_state: select_bucket
+context: {}
+
+states:
+  select_bucket:
+    ui:
+      title: Update Object Lock
+      description: Select a bucket to update its Object Lock configuration
+      components:
+        - type: text
+          key: bucket_name
+          label: Bucket Name
+          placeholder: "my-bucket"
+          required: true
+    transitions:
+      - action: check
+        target: checking
+
+  checking:
+    ui:
+      title: Checking Object Lock
+      description: "Checking Object Lock for '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: checking_msg
+          label: "Retrieving current Object Lock configuration..."
+          variant: info
+    transitions:
+      - action: checked
+        target: configure
+    action:
+      type: s3_call
+      operation: get_object_lock_configuration
+      params:
+        bucket_name: "$ctx.bucket_name"
+
+  configure:
+    ui:
+      title: "Object Lock - {{bucket_name}}"
+      description: "Current: {{enabled}}"
+      components:
+        - type: message
+          key: current_config
+          label: "Object Lock enabled: {{enabled}}"
+          variant: info
+        - type: select
+          key: mode
+          label: Retention Mode
+          options:
+            - label: Governance
+              value: GOVERNANCE
+            - label: Compliance
+              value: COMPLIANCE
+        - type: text
+          key: days
+          label: Retention Days
+          placeholder: "30"
+          required: true
+    transitions:
+      - action: apply
+        target: confirm
+      - action: cancel
+        target: __end__
+
+  confirm:
+    ui:
+      title: Confirm Object Lock Update
+      description: Review Object Lock changes
+      components:
+        - type: message
+          key: change_summary
+          label: "Set Object Lock on '{{bucket_name}}': {{mode}} mode, {{days}} days retention"
+          variant: warning
+    transitions:
+      - action: confirm
+        target: applying
+      - action: back
+        target: configure
+
+  applying:
+    ui:
+      title: Applying Object Lock
+      description: "Updating Object Lock on '{{bucket_name}}'..."
+      components:
+        - type: message
+          key: applying_msg
+          label: "Applying Object Lock configuration..."
+          variant: info
+    transitions:
+      - action: applied
+        target: success
+    action:
+      type: s3_call
+      operation: put_object_lock_configuration
+      params:
+        bucket_name: "$ctx.bucket_name"
+        mode: "$ctx.mode"
+        days: "$ctx.days"
+
+  success:
+    ui:
+      title: Object Lock Updated
+      description: Object Lock configuration applied successfully
+      components:
+        - type: message
+          key: success_msg
+          label: "Object Lock on '{{bucket_name}}' updated: {{mode}} mode, {{days}} days!"
+          variant: success
+    transitions:
+      - action: done
+        target: __end__

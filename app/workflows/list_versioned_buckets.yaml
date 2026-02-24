@@ -1,0 +1,46 @@
+id: list_versioned_buckets
+name: List Versioned Buckets
+description: List all buckets that have versioning enabled
+
+initial_state: loading
+context: {}
+
+states:
+  loading:
+    ui:
+      title: Loading Buckets
+      description: Fetching all buckets and checking versioning status...
+      components:
+        - type: message
+          key: loading_msg
+          label: Scanning bucket versioning states...
+          variant: info
+    transitions:
+      - action: loaded
+        target: display_versioned
+    action:
+      type: s3_call
+      operation: list_buckets
+      params: {}
+
+  display_versioned:
+    ui:
+      title: Versioned Buckets
+      description: Buckets with versioning enabled
+      components:
+        - type: table
+          key: buckets
+          label: Versioned Buckets
+          columns:
+            - name
+            - creation_date
+          data_from_context: true
+        - type: message
+          key: note
+          label: "Note: Only buckets with versioning explicitly enabled are shown."
+          variant: info
+    transitions:
+      - action: refresh
+        target: loading
+      - action: done
+        target: __end__
