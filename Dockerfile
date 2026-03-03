@@ -8,8 +8,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
+# Copy project metadata and install dependencies only (cached layer)
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir --prefix=/install .
+# Create a minimal package so pip can resolve the project dependencies
+RUN mkdir -p engineering_intelligence && \
+    echo '"""Placeholder."""' > engineering_intelligence/__init__.py && \
+    pip install --no-cache-dir --prefix=/install .
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.11-slim

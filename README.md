@@ -57,64 +57,28 @@ A backend platform that connects **Jira issues**, **GitHub pull requests**, **fe
 
 ## Getting Started
 
-### Prerequisites
-
-- Docker and Docker Compose
-- (Optional) Python 3.11+ for local development without Docker
-
-### Quick Start with Docker
+### Quick Start (Docker)
 
 ```bash
-# 1. Clone and enter the repo
 git clone <repo-url> && cd cml-python-playground
-
-# 2. Create your environment file
-cp .env.example .env
-# Edit .env — at minimum set EI_SECRET_KEY to something random
-
-# 3. Start everything
-docker compose up -d
-
-# 4. Run database migrations
-docker compose run --rm migrate
-
-# 5. Verify
-curl http://localhost:8000/health
-# {"status":"healthy","version":"0.1.0"}
+cp .env.example .env            # Edit .env — set EI_SECRET_KEY at minimum
+docker compose up -d             # Start all 8 containers
+docker compose run --rm migrate  # Create database tables
+curl http://localhost:8000/health # Verify
 ```
-
-Services will be available at:
 
 | Service | URL |
 |---|---|
-| API | http://localhost:8000 |
-| API docs (Swagger) | http://localhost:8000/docs |
+| API + Swagger docs | http://localhost:8000/docs |
 | Neo4j Browser | http://localhost:7474 |
 | Temporal UI | http://localhost:8080 |
 
-### Local Development (without Docker)
-
-```bash
-# 1. Install dependencies
-pip install -e ".[dev]"
-
-# 2. Start infrastructure (Postgres, Neo4j, ChromaDB, Temporal) via Docker
-docker compose up -d postgres neo4j chromadb temporal postgres-temporal
-
-# 3. Run migrations
-alembic upgrade head
-
-# 4. Start the API server
-uvicorn engineering_intelligence.main:app --reload
-
-# 5. Start the Temporal worker (separate terminal)
-python -m engineering_intelligence.workflows.worker
-```
+**Full deployment guide** — configuration details, local dev setup, first API calls, workflow examples, and troubleshooting — see **[GETTING_STARTED.md](GETTING_STARTED.md)**.
 
 ### Running Tests
 
 ```bash
-pytest tests/unit/ -v
+pytest tests/unit/ -v    # 66 tests
 ```
 
 ## API Reference
