@@ -114,45 +114,78 @@ docker compose down -v       # Stop containers AND delete all data volumes
 
 ## 4. Local Development (Python + Docker for infra)
 
-Use this if you want hot-reload and debugger support.
+Use this if you want hot-reload and debugger support. A **Makefile** wraps all common commands — run `make help` to see everything.
 
 ### 4.1 Start infrastructure only
 
 ```bash
-docker compose up -d postgres neo4j chromadb temporal postgres-temporal temporal-ui
+make infra
+# Starts: Postgres, Neo4j, ChromaDB, Temporal, Temporal UI
+# Uses docker-compose.dev.yml (infra containers only, no app)
 ```
+
+Check status: `make infra-status` | Tail logs: `make infra-logs` | Stop: `make infra-down`
 
 ### 4.2 Install Python dependencies
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate    # Linux/Mac
-pip install -e ".[dev]"
+make dev-install             # pip install -e ".[dev]"
 ```
 
 ### 4.3 Run migrations
 
 ```bash
-alembic upgrade head
+make migrate                 # alembic upgrade head
 ```
 
-### 4.4 Start the API server
+### 4.4 Start the API server (terminal 1)
 
 ```bash
-uvicorn engineering_intelligence.main:app --reload --host 0.0.0.0 --port 8000
+make run
+# uvicorn engineering_intelligence.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 4.5 Start the Temporal worker (separate terminal)
+### 4.5 Start the Temporal worker (terminal 2)
 
 ```bash
-source .venv/bin/activate
-python -m engineering_intelligence.workflows.worker
+make worker
+# python -m engineering_intelligence.workflows.worker
 ```
 
-### 4.6 Run tests
+### 4.6 Run tests / lint
 
 ```bash
-pytest tests/unit/ -v
+make test                    # pytest (66 unit tests)
+make test-cov                # pytest with coverage
+make lint                    # ruff check
+make format                  # ruff format (auto-fix)
+```
+
+### 4.7 Full Makefile reference
+
+```
+make help             Show all commands
+make install          Install production deps
+make dev-install      Install with dev deps (pytest, ruff, mypy)
+make infra            Start infra containers (Postgres, Neo4j, ChromaDB, Temporal)
+make infra-down       Stop infra containers
+make infra-reset      Stop infra + delete all data volumes
+make infra-logs       Tail infra logs
+make infra-status     Show infra container status
+make migrate          Run Alembic migrations
+make migrate-down     Rollback one migration
+make run              Start FastAPI with hot-reload
+make worker           Start Temporal worker
+make test             Run unit tests
+make test-cov         Run tests with coverage
+make lint             Run ruff linter
+make format           Auto-format code
+make up               Start everything in Docker (full stack)
+make down             Stop all Docker containers
+make docker-migrate   Run migrations inside Docker
+make clean            Remove build artifacts and caches
 ```
 
 ---
