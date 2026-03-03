@@ -10,10 +10,12 @@ from engineering_intelligence.routers import (
     agent,
     analytics,
     auth,
+    dashboard,
     features,
     jira,
     pull_requests,
     rag,
+    schedule,
     workflow,
 )
 
@@ -61,6 +63,8 @@ def create_app() -> FastAPI:
     app.include_router(analytics.router, prefix=prefix)
     app.include_router(rag.router, prefix=prefix)
     app.include_router(workflow.router, prefix=prefix)
+    app.include_router(schedule.router, prefix=prefix)
+    app.include_router(dashboard.router, prefix=prefix)
     app.include_router(agent.router, prefix=prefix)
 
     @app.get("/health")

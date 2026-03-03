@@ -230,3 +230,20 @@ class WorkflowRun(TimestampMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+# ── Workflow Schedules ────────────────────────────────────────────────────────
+
+
+class WorkflowSchedule(TimestampMixin, Base):
+    __tablename__ = "workflow_schedules"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    workflow_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    cron_expression: Mapped[str] = mapped_column(String(100), nullable=False)
+    params: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    temporal_schedule_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
