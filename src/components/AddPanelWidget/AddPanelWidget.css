@@ -1,0 +1,77 @@
+.add-panel-widget {
+  padding: 16px;
+}
+.add-panel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.add-panel-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--accent-primary)08;
+}
+.add-panel-expanded {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  padding: 16px;
+}
+.add-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.add-panel-header h4 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.close-btn {
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+.close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.panel-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+.panel-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  transition: all 0.15s;
+}
+.panel-type-card:hover {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary)10;
+}
+.panel-type-icon {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+.panel-type-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}

@@ -1,0 +1,11 @@
+.barchart-panel {
+  width: 100%;
+  height: 100%;
+}
+.barchart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+}

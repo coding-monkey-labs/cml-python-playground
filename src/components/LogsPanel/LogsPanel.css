@@ -1,0 +1,58 @@
+.logs-panel {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.logs-scroll {
+  height: 100%;
+  overflow-y: auto;
+}
+.log-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 8px;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border-color);
+  line-height: 1.6;
+}
+.log-entry:hover {
+  background: var(--bg-hover);
+}
+.log-time {
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 50px;
+}
+.log-level {
+  padding: 0 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.level-info { background: var(--info)22; color: var(--info); }
+.level-warn { background: var(--warning)22; color: var(--warning); }
+.level-error { background: var(--error)22; color: var(--error); }
+.level-debug { background: var(--text-muted)22; color: var(--text-muted); }
+.log-label {
+  padding: 0 4px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.log-message {
+  color: var(--text-primary);
+  flex: 1;
+  word-break: break-word;
+}
+.logs-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+}

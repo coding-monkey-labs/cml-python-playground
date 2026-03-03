@@ -1,0 +1,88 @@
+.alertlist-panel {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+.alert-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.15s;
+}
+.alert-item:hover {
+  background: var(--bg-hover);
+}
+.alert-state-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.state-alerting { background: var(--error)22; color: var(--error); }
+.state-pending { background: var(--warning)22; color: var(--warning); }
+.state-ok { background: var(--success)22; color: var(--success); }
+.state-nodata { background: var(--text-muted)22; color: var(--text-muted); }
+.state-paused { background: var(--info)22; color: var(--info); }
+.alert-content {
+  flex: 1;
+  min-width: 0;
+}
+.alert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.alert-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.alert-severity {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.severity-critical { background: var(--error)22; color: var(--error); }
+.severity-warning { background: var(--warning)22; color: var(--warning); }
+.severity-info { background: var(--info)22; color: var(--info); }
+.alert-message {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.alert-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.alert-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.alert-label {
+  font-size: 10px;
+  padding: 0 4px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+.alertlist-loading, .alertlist-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 13px;
+}
